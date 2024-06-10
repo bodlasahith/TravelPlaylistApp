@@ -5,7 +5,13 @@ import axios from "axios";
 import * as AuthSession from "expo-auth-session";
 import * as Location from "expo-location";
 import * as WebBrowser from "expo-web-browser";
-import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, GOOGLE_MAPS_API_KEY } from '@env';
+import {
+  SPOTIFY_CLIENT_ID,
+  SPOTIFY_CLIENT_SECRET,
+  GOOGLE_MAPS_API_KEY,
+} from "@env";
+
+import GenreForm from "./GenreForm";
 
 const clientId = SPOTIFY_CLIENT_ID;
 const clientSecret = SPOTIFY_CLIENT_SECRET;
@@ -19,18 +25,20 @@ const discovery = {
 };
 
 const App = () => {
-  const [destination, setDestination] = useState("");
-  const [travelTime, setTravelTime] = useState(null);
   const [accessToken, setAccessToken] = useState("");
 
+  const [travelTime, setTravelTime] = useState(null);
+  const [destination, setDestination] = useState("");
   const [markerPosition, setMarkerPosition] = useState(null);
+  const [currentPosition, setCurrentPosition] = useState(null);
   const [region, setRegion] = useState({
     latitude: 37.78825,
     longitude: -122.4324,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
-  const [currentPosition, setCurrentPosition] = useState(null);
+
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -190,6 +198,10 @@ const App = () => {
     }
   };
 
+  const openGenreModal = () => {
+    setShowModal(true);
+  };
+
   const createPlaylist = async () => {
     const origin = `${currentPosition.latitude},${currentPosition.longitude}`;
     const destination = `${markerPosition.latitude},${markerPosition.longitude}`;
@@ -199,21 +211,18 @@ const App = () => {
 
     const songs = await fetchSongs(accessToken, travelTime);
 
-    const response = await fetch(
-      `https://api.spotify.com/v1/me/playlists`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: "Travel Playlist",
-          description: "Playlist curated for your trip",
-          public: true,
-        }),
-      }
-    );
+    const response = await fetch(`https://api.spotify.com/v1/me/playlists`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Travel Playlist",
+        description: "Playlist curated for your trip",
+        public: true,
+      }),
+    });
 
     const playlist = await response.json();
 
@@ -263,7 +272,8 @@ const App = () => {
           promptAsync();
         }}
       />
-      <Button title="Create Playlist" onPress={createPlaylist} />
+      <Button title="Create Playlist" onPress={openGenreModal} />
+      <GenreForm showModal={showModal} setShowModal={setShowModal}  />
     </View>
   );
 };
